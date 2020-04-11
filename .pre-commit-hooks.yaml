@@ -1,0 +1,8 @@
+---
+- id: k8svalidate
+  name: k8svalidate
+  description: A pre-commit hook to validate Kubernetes YAML files
+  entry: k8svalidate
+  language: python
+  types:
+  - yaml
