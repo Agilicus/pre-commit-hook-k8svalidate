@@ -94,7 +94,7 @@ def main():
                     except utils.SchemaNotFoundError:
                         result = "Skipped [Unknown Schema]"
                     except jsonschema.exceptions.ValidationError as e:
-                        result = f"FAIL [{str(e)}]"
+                        result = f"FAIL [{e.args[0]}]"
                         valid = False
                 else:
                     result = "Skipped [Not Kubernetes YAML]"

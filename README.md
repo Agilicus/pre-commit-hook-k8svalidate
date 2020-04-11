@@ -18,8 +18,8 @@ k8s-validate [--kubernetes-version X.X.X] [--exclude glob-pattern] files
 
 Add a section similar to this to your .pre-commit-hooks.yaml:
   - repo: https://github.com/Agilicus/pre-commit-hook-k8svalidate.git
-    rev: v0.0.5
+    rev: v0.0.6
     hooks:
       - id: k8svalidate
-        args: [--exclude, "*.patch.yaml"]
+        args: [--exclude, "**/*.patch.yaml"]
         files: .yaml$
