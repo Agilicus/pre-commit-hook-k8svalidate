@@ -1,0 +1,115 @@
+#!/usr/bin/env python3
+"""Validate input Kubernetes YAML against API specification.
+
+SPDX-License-Identifier: Apache-2.0.
+"""
+
+import argparse
+import glob
+import itertools
+import os
+import sys
+
+import jsonschema
+import kubernetes_validate.utils as utils
+from ruamel.yaml import YAML
+
+
+def unskipped(i_files, exclude):
+    """Take a list of input files, and a list of globs to exclude, subtract.
+
+    Args:
+        i_files (list): list of input files
+        exclude (list): list of globs
+
+    Returns:
+        list: list of filenames
+    """
+    e_files = []
+    if exclude:
+        for f in exclude:
+            e_files.append(glob.glob(f))
+        e_files = list(itertools.chain.from_iterable(e_files))
+    o_files = list(set(i_files).difference(set(e_files)))
+    return o_files
+
+
+def is_valid_type(doc):
+    """If apiVersion exists, as does kind.... accept.
+
+    Args:
+        doc: single YAML document
+
+    Returns:
+        bool: true if we should process
+    """
+    valid = True
+    if "apiVersion" not in doc or "kind" not in doc:
+        valid = False
+    return valid
+
+
+def main():
+    """Parse and do all files.
+
+    Returns:
+        shell: 0 for success, 1 for error
+    """
+    parser = argparse.ArgumentParser(
+        description="Validate Kubernetes resource definitions",
+    )
+    parser.add_argument(
+        "-k",
+        "--kubernetes-version",
+        action="append",
+        help="version of Kubernetes to validate against. Defaults to %s"
+        % utils.latest_version(),
+    )
+    parser.add_argument("-e", "--exclude", action="append", help="files to exclude")
+    parser.add_argument(
+        "--strict",
+        action="store_true",
+        default=False,
+        help="whether to use strict validation, rejecting unexpected properties",
+    )
+    parser.add_argument("files", nargs=argparse.REMAINDER)
+
+    args = parser.parse_args()
+
+    if not args.files:
+        parser.print_help()
+        return 0
+
+    overall_result = True
+    version = args.kubernetes_version or utils.latest_version()
+    for input in unskipped(args.files, args.exclude):
+        with open(input, "r") as i_file:
+            data = i_file.read()
+            docs = list(YAML().load_all(data))
+            for doc in docs:
+                result = "Valid"
+                valid = True
+                if is_valid_type(doc):
+                    try:
+                        utils.validate(doc, version, args.strict)
+                    except utils.SchemaNotFoundError:
+                        result = "Skipped [Unknown Schema]"
+                    except jsonschema.exceptions.ValidationError as e:
+                        result = f"FAIL [{str(e)}]"
+                        valid = False
+                else:
+                    result = "Skipped [Not Kubernetes YAML]"
+                if not valid:
+                    overall_result = False
+                s_valid = "PASS" if valid else "FAIL"
+                print(f"{s_valid}: file {input} -> {result}")
+    return overall_result
+
+
+if __name__ == "__main__":
+    rc = main()
+    if not rc:
+        print("Overall result: fail", file=sys.stderr)
+        os.exit(1)
+    else:
+        os.exit(0)

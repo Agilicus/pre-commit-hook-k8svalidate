@@ -1,0 +1,32 @@
+---
+apiVersion: agilicus/v1
+kind: IstioIngressGenerator
+metadata:
+  name: not-used-ingress
+  namespace: egov
+name: admin
+hostname: admin.egov.__ROOT_DOMAIN__
+issuer: letsencrypt-istio
+match_routes:
+  http:
+    - match:
+        - uri:
+            prefix: /
+          headers:
+            cookie:
+              regex: ^(.*;[\s]?)?(ver=master)(;.*)?$
+      route:
+        - destination:
+            host: portal.portal.svc.cluster.local
+            subset: master
+            port:
+              number: 5000
+    - match:
+        - uri:
+            prefix: /
+      route:
+        - destination:
+            host: portal.portal.svc.cluster.local
+            subset: stable
+            port:
+              number: 5000
