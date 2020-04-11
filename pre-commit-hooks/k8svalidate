@@ -43,7 +43,7 @@ def is_valid_type(doc):
         bool: true if we should process
     """
     valid = True
-    if "apiVersion" not in doc or "kind" not in doc:
+    if not doc or "apiVersion" not in doc or "kind" not in doc:
         valid = False
     return valid
 
@@ -82,26 +82,34 @@ def main():
     overall_result = True
     version = args.kubernetes_version or utils.latest_version()
     for input in unskipped(args.files, args.exclude):
-        with open(input, "r") as i_file:
-            data = i_file.read()
-            docs = list(YAML().load_all(data))
-            for doc in docs:
-                result = "Valid"
-                valid = True
-                if is_valid_type(doc):
-                    try:
-                        utils.validate(doc, version, args.strict)
-                    except utils.SchemaNotFoundError:
-                        result = "Skipped [Unknown Schema]"
-                    except jsonschema.exceptions.ValidationError as e:
-                        result = f"FAIL [{e.args[0]}]"
-                        valid = False
-                else:
-                    result = "Skipped [Not Kubernetes YAML]"
-                if not valid:
-                    overall_result = False
-                s_valid = "PASS" if valid else "FAIL"
-                print(f"{s_valid}: file {input} -> {result}")
+        try:
+            with open(input, "r") as i_file:
+                data = i_file.read()
+                docs = list(YAML().load_all(data))
+                for doc in docs:
+                    result = "Valid"
+                    valid = True
+                    operation = ""
+                    if is_valid_type(doc):
+                        try:
+                            utils.validate(doc, version, args.strict)
+                            operation = "PASS"
+                        except utils.SchemaNotFoundError:
+                            result = "Skipped [Unknown Schema]"
+                            operation = "SKIP"
+                        except jsonschema.exceptions.ValidationError as e:
+                            result = f"FAIL [{e.args[0]}]"
+                            valid = False
+                            operation = "FAIL"
+                    else:
+                        result = "Skipped [Not Kubernetes YAML]"
+                        operation = "SKIP"
+                    if not valid:
+                        overall_result = False
+                    print(f"{operation}: file {input} -> {result}")
+        except FileNotFoundError:
+            print(f"SKIP: file {input} -> Does not exist")
+
     return overall_result
 
 
