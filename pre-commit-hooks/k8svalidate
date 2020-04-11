@@ -93,17 +93,17 @@ def main():
                     if is_valid_type(doc):
                         try:
                             utils.validate(doc, version, args.strict)
-                            operation = "PASS"
+                            operation = " PASS"
                         except utils.SchemaNotFoundError:
                             result = "Skipped [Unknown Schema]"
-                            operation = "SKIP"
+                            operation = " SKIP"
                         except jsonschema.exceptions.ValidationError as e:
                             result = f"FAIL [{e.args[0]}]"
                             valid = False
-                            operation = "FAIL"
+                            operation = "*FAIL"
                     else:
                         result = "Skipped [Not Kubernetes YAML]"
-                        operation = "SKIP"
+                        operation = " SKIP"
                     if not valid:
                         overall_result = False
                     print(f"{operation}: file {input} -> {result}")
