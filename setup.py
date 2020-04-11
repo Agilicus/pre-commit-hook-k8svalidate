@@ -8,5 +8,5 @@ setup(
     url="https://github.com/Agilicus/pre-commit-hook-k8svalidate",
     version="0.0.0",
     install_requires=["ruamel.yaml>=0.16.10", "kubernetes-validate>=1.16.0"],
-    scripts=["pre_commit_hooks/k8s-validate"],
+    scripts=["pre_commit_hooks/k8svalidate"],
 )
