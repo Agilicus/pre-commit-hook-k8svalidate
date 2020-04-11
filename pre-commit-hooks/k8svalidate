@@ -7,7 +7,6 @@ SPDX-License-Identifier: Apache-2.0.
 import argparse
 import glob
 import itertools
-import os
 import sys
 
 import jsonschema
@@ -110,6 +109,6 @@ if __name__ == "__main__":
     rc = main()
     if not rc:
         print("Overall result: fail", file=sys.stderr)
-        os.exit(1)
+        sys.exit(1)
     else:
-        os.exit(0)
+        sys.exit(0)
