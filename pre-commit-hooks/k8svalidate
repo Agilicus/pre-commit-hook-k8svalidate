@@ -27,7 +27,7 @@ def unskipped(i_files, exclude):
     e_files = []
     if exclude:
         for f in exclude:
-            e_files.append(glob.glob(f))
+            e_files.append(glob.glob(f, recursive=True))
         e_files = list(itertools.chain.from_iterable(e_files))
     o_files = list(set(i_files).difference(set(e_files)))
     return o_files
